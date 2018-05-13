@@ -43,7 +43,8 @@ namespace NoSQLDataTreeApp
         public void AddChild_Click(object sender, EventArgs e, Item parent)
         {
             //Instantiate the child Item
-            Item me = new Item(parent, parent.LastChild(), parent.NextChildPos(), parent.NextChildColumn(), parent.NextChildRow());
+            Item me = new Item(parent, parent.LastChild(), parent.NextChildPos(), 
+                parent.NextChildColumn(), parent.NextChildRow());
             parent.Children.Add(me);
 
             //Determine whether a new column needs to be added
@@ -56,7 +57,8 @@ namespace NoSQLDataTreeApp
 
             //Instantiate child Item controls
             ContextMenuStrip contextMenuStrip = new ContextMenuStrip(this.components);
-            ToolStripMenuItem addChildToolStripMenuItem = new ToolStripMenuItem(); 
+            ToolStripMenuItem addChildToolStripMenuItem = new ToolStripMenuItem();
+            ToolStripMenuItem deleteMenuItem = new ToolStripMenuItem();
             TextBox textBoxName = new TextBox()
             {
                 BackColor = SystemColors.ActiveCaption,
@@ -92,7 +94,7 @@ namespace NoSQLDataTreeApp
             // contextMenuStrip
             // 
             contextMenuStrip.Items.AddRange(new ToolStripItem[] {
-            addChildToolStripMenuItem});
+            addChildToolStripMenuItem, deleteMenuItem});
             contextMenuStrip.Name = "contextMenuStrip" + _itemCount;
             contextMenuStrip.Size = new Size(128, 26);
 
@@ -102,7 +104,15 @@ namespace NoSQLDataTreeApp
             addChildToolStripMenuItem.Name = "addChildToolStripMenuItem" + _itemCount;
             addChildToolStripMenuItem.Size = new Size(127, 22);
             addChildToolStripMenuItem.Text = "Add Child";
-            addChildToolStripMenuItem.Click += (objSender, evt) => this.AddChild_Click(objSender, evt, me);
+            addChildToolStripMenuItem.Click += (objSender, evt) => AddChild_Click(objSender, evt, me);
+
+            //
+            // deleteMenuItem
+            //
+            deleteMenuItem.Name = "deleteMenuItem" + _itemCount;
+            deleteMenuItem.Size = new Size(127, 22);
+            deleteMenuItem.Text = "Delete";
+            deleteMenuItem.Click += (objSender, evt) => Delete_Click(objSender, evt, me);
 
             // 
             // textBoxName
@@ -217,19 +227,27 @@ namespace NoSQLDataTreeApp
         private void Relayout(Item item)
         {
             _laidOutList.Add(item);
-            this.tableLayoutPanel1.Controls.Remove(item.Pnl);  //remove the Panel from table
+            RemovePanel(item);
+            
             //Set the row and vertical position to below the lowest child of oldest sibling
             if(item.OlderSibling != null)
             {
-                item.Position = new NoSQLDataTreeLib.Point(item.Position.X, item.OlderSibling.LowestChildY() + Item.ROW_HEIGHT);
+                item.Position = new NoSQLDataTreeLib.Point(item.Position.X, 
+                    item.OlderSibling.LowestChildY() + Item.ROW_HEIGHT);
                 item.Row = item.OlderSibling.LowestChildRow() + 2;
             }
             else
             {
                 //set row and vert. position based on parent
-                item.Position = new NoSQLDataTreeLib.Point(item.Parent.Position.X + Item.COL_WIDTH, item.Parent.Position.Y + Item.ROW_HEIGHT);
+                item.Position = new NoSQLDataTreeLib.Point(item.Parent.Position.X + Item.COL_WIDTH, 
+                    item.Parent.Position.Y + Item.ROW_HEIGHT);
                 item.Row = item.Parent.Row + 1;
             }
+        }
+
+        private void RemovePanel(Item item)
+        {
+            this.tableLayoutPanel1.Controls.Remove(item.Pnl);  //remove the Panel from table
         }
 
         private void AddAllPanels(List<Item> itemList)
@@ -240,7 +258,43 @@ namespace NoSQLDataTreeApp
             }
         }
 
+        private void Delete_Click(object sender, EventArgs e, Item item)
+        {
+            //remove item from younger sibling
+            int itemIndex = item.Parent.Children.IndexOf(item);
+            if(item.Parent.Children.Count > itemIndex + 1) //younger sibling exists
+            {
+                if(item.OlderSibling == null)
+                {
+                    item.Parent.Children[itemIndex + 1].OlderSibling = null;
+                }
+                else
+                {
+                    item.Parent.Children[itemIndex + 1].OlderSibling = item.OlderSibling;
+                }
+            }
+
+            //remove item from parent
+            item.Parent.Children.Remove(item);
+            DeleteItemAndChildren(item);
+
+            //re-layout all elements below this item
+            RelayoutBasedOn(item.Parent);
+        }
+
+        private void DeleteItemAndChildren(Item item)
+        {
+            if(item.Children != null && item.Children.Count > 0)
+            {
+                foreach(Item child in item.Children)
+                {
+                    DeleteItemAndChildren(child);
+                }
+            }
+            RemovePanel(item);
+        }
+
     } //END OF CLASS
 } //END OF NAMESPACE
 
-//TODO - move ancestors down when a new child is added, add the ability to save?
+//TODO Save to file
