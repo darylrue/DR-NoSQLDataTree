@@ -1,0 +1,15 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/.vs/NoSQLDataTree
+/NoSQLDataTreeApp/bin/Debug
+/NoSQLDataTreeApp/obj/Debug
+/NoSQLDataTreeApp/Properties
+/NoSQLDataTreeApp/MainPage.resx
+/NoSQLDataTreeApp/NoSQLDataTreeApp.csproj
+/NoSQLDataTreeLib/bin/Debug/netstandard2.0
+/NoSQLDataTreeLib/obj/Debug/netstandard2.0
+/NoSQLDataTreeLib/obj
+/NoSQLDataTreeLib/NoSQLDataTreeLib.csproj
+/NoSQLDataTree.sln
